@@ -1,272 +1,207 @@
-# ESLint npm 변경하기
+# Ant Design
+
+- UI 라이브러리
+- `각각의 컴포넌트 학습량이 필요`합니다.
+- https://ant.design/components/overview
+
+## 1. 설치
 
 ```bash
-npm uninstall eslint @eslint/js
-npm install --save-dev eslint@8.56.0
+npm install antd --save
 ```
 
-# swiper
+## 2. 폴더 및 구조
 
-- https://swiperjs.com/react
-- https://swiperjs.com/demos
-
-## 설치
-
-```bash
-npm i swiper
-```
-
-## 폴더 구성
-
-- /src/pages/Slide.jsx 파일 생성
+- /src/components/form 폴더생성
+  - JoinForm.jsx 생성
 
 ```jsx
-import { Swiper, SwiperSlide } from "swiper/react";
-// 기본 작업
-import "swiper/css";
-// 개별 작업
-import "./slide.css";
-function Slide() {
-  return (
-    <div>
-      <h1>Slide</h1>
-      <div className="visual-slide">
-        <Swiper className="sw-visual">
-          <SwiperSlide>1</SwiperSlide>
-          <SwiperSlide>2</SwiperSlide>
-          <SwiperSlide>3</SwiperSlide>
-          <SwiperSlide>4</SwiperSlide>
-          <SwiperSlide>5</SwiperSlide>
-        </Swiper>
-      </div>
-    </div>
-  );
-}
-
-export default Slide;
-```
-
-- /src/pages/slide.css 파일 생성
-
-```css
-.visual-slide {
-  width: 80%;
-  margin: 0 auto;
-  background-color: skyblue;
-}
-.sw-visual {
-  width: 100%;
-  height: 100%;
-  min-height: 200px;
-}
-.sw-visual .swiper-slide {
-  height: 100%;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  background-color: yellowgreen;
-}
-```
-
-## 1. loop 와 navigation 적용예제
-
-- 1 단계 : css 와 모듈을 확인함.
-
-```jsx
-// css 와 모듈 확인
-import "swiper/css/navigation";
-import { Navigation } from "swiper/modules";
-```
-
-- 2 단계 : modules 적용
-
-```jsx
-import { Swiper, SwiperSlide } from "swiper/react";
-// 기본 작업
-import "swiper/css";
-// 개별 작업
-import "./slide.css";
-
-// css 와 모듈 확인
-import "swiper/css/navigation";
-import { Navigation } from "swiper/modules";
-
-function Slide() {
-  return (
-    <div>
-      <h1>Slide</h1>
-      <div className="visual-slide">
-        <Swiper
-          loop={true}
-          navigation={true}
-          modules={[Navigation]}
-          className="sw-visual"
-        >
-          <SwiperSlide>1</SwiperSlide>
-          <SwiperSlide>2</SwiperSlide>
-          <SwiperSlide>3</SwiperSlide>
-          <SwiperSlide>4</SwiperSlide>
-          <SwiperSlide>5</SwiperSlide>
-        </Swiper>
-      </div>
-    </div>
-  );
-}
-
-export default Slide;
-```
-
-## 2. navigation 커스터마이징
-
-```jsx
-import { Swiper, SwiperSlide } from "swiper/react";
-// 기본 작업
-import "swiper/css";
-// 개별 작업
-import "./slide.css";
-
-// css 와 모듈 확인
-import "swiper/css/navigation";
-import { Navigation } from "swiper/modules";
-
-function Slide() {
-  return (
-    <div>
-      <h1>Slide</h1>
-      <div className="visual-slide">
-        {/* 커스터마이징 네비게이션 */}
-        <div className="prev">이전</div>
-        <div className="next">다음</div>
-        <Swiper
-          loop={true}
-          // navigation={true}
-          navigation={{
-            nextEl: ".next",
-            prevEl: ".prev",
-          }}
-          modules={[Navigation]}
-          className="sw-visual"
-        >
-          <SwiperSlide>1</SwiperSlide>
-          <SwiperSlide>2</SwiperSlide>
-          <SwiperSlide>3</SwiperSlide>
-          <SwiperSlide>4</SwiperSlide>
-          <SwiperSlide>5</SwiperSlide>
-        </Swiper>
-      </div>
-    </div>
-  );
-}
-
-export default Slide;
-```
-
-```css
-.visual-slide {
-  position: relative;
-  width: 80%;
-  margin: 0 auto;
-  background-color: skyblue;
-}
-.sw-visual {
-  width: 100%;
-  height: 100%;
-  min-height: 200px;
-}
-.sw-visual .swiper-slide {
-  height: 100%;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  background-color: yellowgreen;
-}
-.prev,
-.next {
-  position: absolute;
-  top: 50%;
-  z-index: 99;
-  width: 40px;
-  height: 40px;
-  background-color: #fff;
-  cursor: pointer;
-}
-.prev {
-  left: 20px;
-}
-.next {
-  right: 20px;
-}
-```
-
-## 3. api 연동과 Swiper 슬라이드
-
-```jsx
-import { Swiper, SwiperSlide } from "swiper/react";
-// 기본 작업
-import "swiper/css";
-// 개별 작업
-import "./slide.css";
-
-// css 와 모듈 확인
-import "swiper/css/navigation";
-import { Navigation } from "swiper/modules";
-import { useEffect, useState } from "react";
-
-// 외부 데이터
-const slideData = [
-  {
-    title: "뉴진스 좋아요.",
-    pic: "https://i.namu.wiki/i/WGsJjdq_YZ55OqLwDcVy03tPUDeuy2bFGjbv7hGdqeTxhugt9oQVd9skQTplZArzk64Id35mmLbkbcMwWEo2-g.webp",
-  },
-  {
-    title: "뉴진스 화이팅",
-    pic: "https://file2.nocutnews.co.kr/newsroom/image/2023/01/21/202301210408091762_0.jpg",
-  },
-  {
-    title: "뉴진스 사랑해요",
-    pic: "https://img.sbs.co.kr/newsnet/etv/upload/2023/08/28/30000871570_1280.jpg",
-  },
-];
-
-function Slide() {
-  // js 자리
-  const [data, setData] = useState([]);
-
-  // 화면에 컴포넌트 보여질때 딱 한번 실행
-  useEffect(() => {
-    setData(slideData);
-  }, []);
-
+import { Button, Form, Input } from "antd";
+function JoinForm() {
+  // jsx 자리
+  // 1. 초기값
+  const initialValue = {
+    userId: "hong",
+    userPass: "1234",
+    nickName: "길동",
+    email: "a@a.net",
+  };
+  // 2. 라벨넣기
+  // 3. placeholder 넣기
+  // 4. 필수값 표현하기
+  // 5. 필수값 안내 메시지 표시하기
+  // 6. 각 필드의 입력중인 값 알아내기
+  const onFiledsChange = (field, allFields) => {
+    console.log(field[0].value);
+    // console.log(allFields);
+  };
+  // 7. 확인 버튼 클릭시 최종 입력값
+  const onFinish = values => {
+    console.log(values);
+  };
   // jsx 자리
   return (
     <div>
-      <h1>Slide</h1>
-      <div className="visual-slide">
-        {/* 커스터마이징 네비게이션 */}
-        <div className="prev">이전</div>
-        <div className="next">다음</div>
-        <Swiper
-          loop={true}
-          // navigation={true}
-          navigation={{
-            nextEl: ".next",
-            prevEl: ".prev",
-          }}
-          modules={[Navigation]}
-          className="sw-visual"
+      <Form
+        style={{ width: 600, margin: "0 auto" }}
+        initialValues={initialValue}
+        onFieldsChange={(field, allFields) => onFiledsChange(field, allFields)}
+        onFinish={values => onFinish(values)}
+      >
+        <Form.Item
+          label="아이디"
+          name={"userId"}
+          required={true}
+          rules={[
+            { required: true, message: "아이디는 필수입니다." },
+            { min: 4, message: "아이디는 4자 이상입니다." },
+            { max: 8, message: "아이디는 최대 8자입니다." },
+          ]}
         >
-          {data.map((item, index) => {
-            return (
-              <SwiperSlide key={index}>
-                <img src={item.pic} alt={item.title} />
-              </SwiperSlide>
-            );
-          })}
-        </Swiper>
+          <Input placeholder="아이디를 입력하세요." />
+        </Form.Item>
+        <Form.Item
+          label="비밀번호"
+          name={"userPass"}
+          required={true}
+          rules={[
+            { required: true, message: "비밀번호는 필수입니다." },
+            {
+              pattern: /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)[a-zA-Z\d]{8,}$/,
+              message:
+                "비밀번호는 최소 8자이상이며, 대소문자, 숫자를 포함해야 합니다.",
+            },
+          ]}
+        >
+          <Input.Password placeholder="비밀번호를 입력하세요." />
+        </Form.Item>
+        <Form.Item label="닉네임" name={"nickName"}>
+          <Input placeholder="닉네임을 입력하세요." />
+        </Form.Item>
+        <Form.Item
+          label="이메일"
+          name={"email"}
+          required={true}
+          rules={[
+            { required: true, message: "이메일은 필수요소입니다." },
+            { type: "email", message: "이메일 형식에 맞지 않습니다." },
+          ]}
+        >
+          <Input placeholder="이메일을 입력하세요." />
+        </Form.Item>
+        <Form.Item>
+          <Button htmlType="sumit">확인</Button>
+        </Form.Item>
+      </Form>
+    </div>
+  );
+}
+
+export default JoinForm;
+```
+
+- /src/pages/JoinPage.jsx
+
+```jsx
+import JoinForm from "../components/form/JoinForm";
+
+function JoinPage() {
+  const formWrap = {
+    margin: "0 auto",
+    width: "80%",
+    background: "#fefefe",
+  };
+  return (
+    <div style={formWrap}>
+      <h1>회원가입</h1>
+      <div>
+        <JoinForm />
       </div>
     </div>
   );
 }
 
-export default Slide;
+export default JoinPage;
+```
+
+## 3. 비밀번호 비교 예제
+
+- /src/components/form/PwForm.jsx 생성
+
+```jsx
+import { Button, Form, Input } from "antd";
+import { useState } from "react";
+function PwForm() {
+  // js 자리
+  // 1. 비밀번호 같은지 다른지 상태저장
+  const [match, setMetch] = useState(true);
+  // 2. Ant Design 에서 Form 요소를 저장해 두고 참조하기
+  const [form] = Form.useForm();
+  // 3. 비밀번호가 바뀔 때 마다 체크함.
+  const handleChangePassword = () => {
+    // name 이 password 인 필드의 값, 즉 value 읽기
+    const pw = form.getFieldValue("password");
+    // name 이 passwordConfirm 인 필드의 값, 즉 value 읽기
+    const pwConfirm = form.getFieldValue("passwordConfirm");
+    if (pwConfirm) {
+      setMetch(pw === pwConfirm);
+    }
+  };
+  const onFinish = values => {
+    console.log(values);
+  };
+  // jsx 자리
+  return (
+    <div>
+      <h2>비밀번호 검증 예제</h2>
+      <div>
+        <Form
+          form={form}
+          name={"password-form"}
+          style={{ width: 600, margin: "0 auto" }}
+          onFinish={values => onFinish(values)}
+        >
+          <Form.Item
+            name={"password"}
+            label="비밀번호"
+            required={true}
+            rules={[
+              { required: true, message: "비밀번호는 필수항목입니다." },
+              {
+                pattern:
+                  /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[!@#$%^&*()\-_=+\[\]{};:'",.<>/?\\|`~])[A-Za-z\d!@#$%^&*()\-_=+\[\]{};:'",.<>/?\\|`~]{8,}$/,
+                message: "비밀번호 형식에 맞지 않습니다.",
+              },
+            ]}
+          >
+            <Input.Password
+              placeholder="비밀번호를 입력하시오."
+              onChange={handleChangePassword}
+            />
+          </Form.Item>
+          <Form.Item
+            name={"passwordConfirm"}
+            label="비밀번호확인"
+            required={true}
+          >
+            <Input.Password
+              placeholder="비밀번호를 확인하시오."
+              onChange={handleChangePassword}
+            />
+          </Form.Item>
+          {/* 비밀번호 비교한 결과 출력 */}
+          {/* {match ? "같군요" : "다르군요"} */}
+          {!match && <div style={{ color: "red" }}>비밀번호가 다릅니다.</div>}
+          <Form.Item>
+            <Button htmlType="submit" disabled={!match}>
+              확인
+            </Button>
+          </Form.Item>
+        </Form>
+      </div>
+    </div>
+  );
+}
+
+export default PwForm;
 ```
