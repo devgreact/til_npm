@@ -1,0 +1,34 @@
+.visual-slide {
+  position: relative;
+  width: 80%;
+  margin: 0 auto;
+  background-color: skyblue;
+}
+.sw-visual {
+  width: 100%;
+  height: 100%;
+  min-height: 200px;
+}
+.sw-visual .swiper-slide {
+  height: 100%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  background-color: yellowgreen;
+}
+.prev,
+.next {
+  position: absolute;
+  top: 50%;
+  z-index: 99;
+  width: 40px;
+  height: 40px;
+  background-color: #fff;
+  cursor: pointer;
+}
+.prev {
+  left: 20px;
+}
+.next {
+  right: 20px;
+}
