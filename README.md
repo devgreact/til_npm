@@ -1,217 +1,295 @@
-# 구글 로그인
+# axios(필수이해)
 
-## 1. GCP(구글 클라우드 플랫폼) 서비스 신청
+- xhr, promise, fetch 로 다루던 `비동기 통신을 대체`함.
+- 실무에서는 fetch 아니면 axios 를 활용함.
+- https://axios-http.com/kr/docs/intro
 
-- https://console.cloud.google.com
-- https://iwoohaha.tistory.com/318
+## 1. CRUD 라이브러리
 
-## 2. `.env` 내용 작성
+- Create : Post (내용추가)
+- Read : Get (내용읽기)
+- Update : Put(전체 내용 수정), Patch(일부분만 수정)
+- Delete : Delete(내용 삭제)
 
-- 접두어 주의 `REACT_APP_`
+## 2. 백엔드 연동
 
-```txt
-REACT_APP_GOOGLE_CLIENT_KEY=키
-REACT_APP_GOOGLE_SECRET_KEY=키
+- Postman
+- Swagger : 백엔드에서 구축해줘야 사용가능함.
+
+## 3. 설치
+
+```bash
+npm install axios
 ```
 
-## 3. 폴더 및 파일 구조
+## 4. 폴더구조
 
-- /src/google 폴더 생성
-- /src/google/googleapi.js
+- 일반적으로 `/src/apis` 폴더 추천
 
-```js
-const GOOGLE_CLIENT_ID = process.env.REACT_APP_GOOGLE_CLIENT_KEY;
-const GOOGLE_REDIRECT_URI = "http://localhost:3000/member/google";
-// 구글 로그인시 활용
-export const getGoogleLoginLink = () => {
-  window.location.href = `https://accounts.google.com/o/oauth2/auth?client_id=${GOOGLE_CLIENT_ID}&redirect_uri=${GOOGLE_REDIRECT_URI}&response_type=code&scope=openid email profile`;
-};
+## 5. axios 권장하는 코딩 자리 및 순서
 
-export const getGoogleToken = async code => {
-  const REST_API_KEY = GOOGLE_CLIENT_ID;
-  const REDIRECT_URI = GOOGLE_REDIRECT_URI;
-  const SECRET_KEY = process.env.REACT_APP_GOOGLE_SECRET_KEY;
-  const response = await fetch(
-    `https://oauth2.googleapis.com/token?grant_type=authorization_code&client_id=${REST_API_KEY}&redirect_uri=${REDIRECT_URI}&client_secret=${SECRET_KEY}&code=${code}`,
-    {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/x-www-form-urlencoded;charset=utf-8",
-      },
-    },
-  );
-  return response.json();
-};
+- useEffect 자리(화면 출력시 호출)에 작성 및 호출 권장
 
-export const getGoogleUserInfo = async accessToken => {
-  try {
-    const response = await fetch(
-      "https://www.googleapis.com/oauth2/v2/userinfo",
-      {
-        method: "GET",
-        headers: {
-          Authorization: `Bearer ${accessToken}`,
-        },
-      },
-    );
+### 5.1. 기본코드
 
-    if (!response.ok) {
-      throw new Error("Failed to fetch Google user info");
-    }
+- 샘플 api : `https://jsonplaceholder.typicode.com`
 
-    const userData = await response.json();
-    return userData;
-  } catch (error) {
-    console.error("Error fetching Google user info:", error);
-    return null;
-  }
-};
-```
-
-## 3. 로그인 후 이동페이지 만들기
-
-- /src/pages/member/AfterGoogle.jsx 생성
+#### 5.1.1. fetch 실행시
 
 ```jsx
-import { useEffect, useState } from "react";
-import { useSearchParams } from "react-router-dom";
-import { getGoogleToken, getGoogleUserInfo } from "../../google/googleapi";
+import { useEffect } from "react";
 
-function AfterGoogle() {
-  // 사용자 정보저장
-  const [userInfo, setUserInfo] = useState(null);
+function App() {
+  // js 자리
+  useEffect(() => {
+    fetch("https://jsonplaceholder.typicode.com/todos")
+      .then(response => response.json())
+      .then(json => console.log(json));
+  }, []);
+  // jsx 자리
+  return <div>App</div>;
+}
 
-  // 구글의 사용자의 정보를 접근하는 토큰 즉, accessToken 을 관리
-  const [accessToken, setAccessToken] = useState(null);
+export default App;
+```
 
-  // 쿼리 스트링을 분해해서 사용해야 합니다.
-  const [URLSearchParams, setURLSearchParams] = useSearchParams();
-  // queryString 에서 code 에 담긴 내용을 알아낸다.
-  const authCode = URLSearchParams.get("code");
-  console.log(authCode);
+#### 5.1.2. axios 실행시
 
-  // 인증을 요청하면 구글에서 인가를 해줌
-  // 비동기 이므로 async .... await 사용
-  const getAccessTokenCall = async () => {
-    try {
-      // Acess Token 얻어오기
-      const accessKey = await getGoogleToken(authCode);
-      console.log("accessKey : ", accessKey);
-      if (accessKey) {
-        // 사용자 액세스 토큰 저장함.
-        setAccessToken(accessKey.access_token);
-        // 사용자 액세스 토큰으로 사용자 정보 요청하기
-        const userData = await getGoogleUserInfo(accessKey.access_token);
-        console.log("구글의 사용자 정보 : ", userData);
-        // 사용자 정보 보관
-        setUserInfo(userData);
+```jsx
+import axios from "axios";
+import { useEffect } from "react";
+
+function App() {
+  // js 자리
+  useEffect(() => {
+    const getTodos = async () => {
+      try {
+        const res = await axios.get(
+          "https://jsonplaceholder.typicode.com/todos",
+        );
+        console.log(res.data);
+      } catch (error) {
+        console.log(error);
       }
+    };
+    getTodos();
+  }, []);
+  // jsx 자리
+  return <div>App</div>;
+}
+
+export default App;
+```
+
+### 5.2. 실전 코드
+
+- 실제로 외부데이터 연동은 상당히 많은 경우 수가 있음.
+- 컴포넌트는 그냥 자료를 출력, 추가, 삭제 역할만
+- 백엔드 연동은 `별도의 파일로 분리`해서 호출만 해줌.
+
+#### 5.2.1. 데이터 호출 내용 분리 과정
+
+- 최소한 외부 함수로 빼준다.
+
+```jsx
+import axios from "axios";
+import { useEffect } from "react";
+
+function App() {
+  // js 자리
+  // 할일 목록 비동기 통신 함수
+  const getTodos = async () => {
+    try {
+      const res = await axios.get("https://jsonplaceholder.typicode.com/todos");
+      console.log(res.data);
     } catch (error) {
       console.log(error);
     }
   };
 
   useEffect(() => {
-    getAccessTokenCall();
-  }, [authCode]);
+    getTodos();
+  }, []);
   // jsx 자리
-  return (
-    <div>
-      <h1>구글 사용자 정보</h1>
-      <p>인가코드 : {authCode} </p>
-      <p>액세스토큰: {accessToken ? "성공적으로 가져옴" : "없음"}</p>
-      <div>
-        {userInfo ? (
-          <div>
-            <p>아이디: {userInfo.id}</p>
-            <p>이름: {userInfo.name}</p>
-            <p>이메일: {userInfo.email}</p>
-            <p>
-              프로필 사진:
-              <img src={userInfo.picture} alt="프로필" width={50} />
-            </p>
-          </div>
-        ) : (
-          <p>사용자 정보를 불러오는 중...</p>
-        )}
-      </div>
-    </div>
-  );
-}
-
-export default AfterGoogle;
-```
-
-## 5. 라우터 구성
-
-- App.jsx
-
-```jsx
-import { BrowserRouter as Router, Route, Routes } from "react-router-dom";
-import LoginPage from "./pages/LoginPage";
-import After from "./pages/member/After";
-import AfterGoogle from "./pages/member/AfterGoogle";
-
-function App() {
-  return (
-    <Router>
-      <LoginPage />
-      <Routes>
-        <Route path="/member/kko" element={<After />}></Route>
-        <Route path="/member/google" element={<AfterGoogle />}></Route>
-      </Routes>
-    </Router>
-  );
+  return <div>App</div>;
 }
 
 export default App;
 ```
 
-## 6. 구글로그인 버튼 배치
+- 파일로 함수를 추출하시길 권장
+- `/src/apis/todoApi.js` 생성
 
-- /src/pages/LoginPage.jsx
+```js
+import axios from "axios";
+
+// 할일 목록 비동기 통신 함수
+export const getTodos = async () => {
+  try {
+    const res = await axios.get("https://jsonplaceholder.typicode.com/todos");
+    console.log(res.data);
+  } catch (error) {
+    console.log(error);
+  }
+};
+```
+
+- 사용하기
 
 ```jsx
-import { Link, useNavigate } from "react-router-dom";
-import { getKakaoLoginLink } from "../kko/kkoapi";
-import { useRecoilState } from "recoil";
-import { KKOLoginAtom } from "../atoms/kkoLoginAtom";
-import { getGoogleLoginLink } from "../google/googleapi";
+import { useEffect } from "react";
+import { getTodos } from "./apis/todoApi";
 
-function LoginPage() {
-  const navigate = useNavigate();
-  // Recoil State 로 전역 상태 활용하기
-  const [userInfo, setUserInfo] = useRecoilState(KKOLoginAtom);
-  // 카카오 로그인 URL 만들기
-  const kkoLoginUrl = getKakaoLoginLink();
-  //   console.log(kkoLoginUrl);
-  const logOut = () => {
-    setUserInfo({
-      id: "",
-      nickname: "",
-      email: "",
-      thumbnail_image_url: "",
-    });
-    navigate("/");
-  };
-  // 구글 로그인
-  const googleLogin = () => {
-    getGoogleLoginLink();
-  };
-  return (
-    <div>
-      <h1>LoginPage</h1>
-      {userInfo.id ? (
-        <button onClick={logOut}>로그아웃</button>
-      ) : (
-        <Link to={kkoLoginUrl}>카카오 로그인</Link>
-      )}
-      <div>
-        <button onClick={googleLogin}>구글로그인</button>
-      </div>
-    </div>
-  );
+function App() {
+  // js 자리
+  useEffect(() => {
+    getTodos();
+  }, []);
+  // jsx 자리
+  return <div>App</div>;
 }
 
-export default LoginPage;
+export default App;
+```
+
+- API 주소도 가능하면 별도로 분리한다.
+
+```js
+import axios from "axios";
+// API 주소
+export const todoURL = "https://jsonplaceholder.typicode.com/todos";
+
+// 할일 목록 비동기 통신 함수
+export const getTodos = async () => {
+  try {
+    const res = await axios.get(todoURL);
+    console.log(res.data);
+  } catch (error) {
+    console.log(error);
+  }
+};
+```
+
+#### 5.2.2. 다양한 API 작성하기
+
+```js
+import axios from "axios";
+// API 주소
+const todoURL = "https://jsonplaceholder.typicode.com/todos";
+
+// 할일 목록 전체 호출하기
+const getTodos = async () => {
+  try {
+    const res = await axios.get(todoURL);
+    console.log(res.data);
+  } catch (error) {
+    console.log(error);
+  }
+};
+// 할일 목록 한개만 호출하기
+const getTodo = async id => {
+  try {
+    const res = await axios.get(`${todoURL}/${id}`);
+    console.log(res.data);
+  } catch (error) {
+    console.log(error);
+  }
+};
+// 할일 1개 추가하기 : post
+const postTodo = async data => {
+  try {
+    const res = axios.post(todoURL, data);
+    console.log(res.data);
+  } catch (error) {
+    console.log(error);
+  }
+};
+// 할일 1개 삭제하기 : delete
+const deleteTodo = async id => {
+  try {
+    const res = await axios.delete(`${todoURL}/${id}`);
+    console.log(res.data);
+  } catch (error) {
+    console.log(error);
+  }
+};
+// 할일 전체 업데이트
+const putTodo = async (id, data) => {
+  try {
+    const res = await axios.put(`${todoURL}/${id}`, data);
+    console.log(res);
+  } catch (error) {
+    console.log(error);
+  }
+};
+// 할일 일부분 수정
+const patchTodo = async (id, { title, completed }) => {
+  try {
+    const res = await axios.patch(`${todoURL}/${id}`, { title, completed });
+    console.log(res.data);
+  } catch (error) {
+    console.log(error);
+  }
+};
+
+export { getTodos, getTodo, putTodo, deleteTodo, patchTodo };
+```
+
+#### 5.2.3. photo API 작성해 보기
+
+- /src/apis/photoApi.js 생성
+
+```js
+import axios from "axios";
+
+const photoUrl = "https://jsonplaceholder.typicode.com/photos";
+const getPhotos = async () => {
+  try {
+    const res = axios.get(photoUrl);
+    console.log(res.data);
+  } catch (error) {
+    console.log(error);
+  }
+};
+const getPhoto = async id => {
+  try {
+    const res = axios.get(`${photoUrl}/${id}`);
+    console.log(res.data);
+  } catch (error) {
+    console.log(error);
+  }
+};
+const postPhoto = async data => {
+  try {
+    const res = axios.post(photoUrl, data);
+    console.log(res.data);
+  } catch (error) {
+    console.log(error);
+  }
+};
+const deletePhoto = async id => {
+  try {
+    const res = axios.delete(`${photoUrl}/${id}`);
+    console.log(res.data);
+  } catch (error) {
+    console.log(error);
+  }
+};
+const putPhoto = async (id, data) => {
+  try {
+    const res = axios.put(`${photoUrl}/${id}`, data);
+    console.log(res.data);
+  } catch (error) {
+    console.log(error);
+  }
+};
+const patchPhoto = async (id, {}) => {
+  try {
+    const res = axios.patch(`${photoUrl}/${id}`, {});
+    console.log(res.data);
+  } catch (error) {
+    console.log(error);
+  }
+};
+export { getPhoto, getPhotos, postPhoto, putPhoto, deletePhoto, patchPhoto };
 ```
