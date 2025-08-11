@@ -1,691 +1,439 @@
-# Kakao Map
+# React Quill
 
-- 개발자 : https://developers.kakao.com
-- 참조 : https://velog.io/@tpgus758/React에서-Kakao-map-API-사용하기
+- WYSIWYG Editor : What You See Is What You Get
+- 종류 : react-quill, CKEditor, Toast Editor, Tiptab
 
-## 1. API 신청하기
+## 1. 설치
 
-- 환경설정 내용
+- https://quilljs.com/docs/quickstart
+- `npm i react-quill`
+- `npm i quill`
 
-```
-REACT_APP_KKO_MAP_REST_API_KEY=키값
-REACT_APP_KKO_MAP_JS_API_KEY=키값
-```
+## 2. 폴더 구조 및 기본파일
 
-- 웹 플랫폼 설정
-
-```
- http://localhost:3000
- http://localhost:5173
-```
-
-## 2. 카카오 지도 가이드
-
-- https://apis.map.kakao.com/web/guide/
-- 가능하면 위의 사항을 참조해서 진행하기를 권장함.
-
-## 3. JS 로 출력하기 (기본)
-
-- App.jsx
+- /src/components/editor/AddForm.jsx
 
 ```jsx
-import { useEffect } from "react";
-import MapDiv from "./components/MapDiv";
+import ReactQuill from "react-quill";
+import "react-quill/dist/quill.snow.css";
+const AddForm = () => {
+  return (
+    <div>
+      <form>
+        <input type="text" placeholder="제목을 입력하세요." />
+        <br />
+        <input type="password" placeholder="비밀번호를 입력하세요." />
+        <br />
+        <textarea></textarea>
+        <br />
+        <ReactQuill />
+        <button>확인</button>
+      </form>
+    </div>
+  );
+};
 
-function App() {
+export default AddForm;
+```
+
+## 3. 기능 살펴보기
+
+### 3.1. 입력 중인 내용 살펴보기
+
+- html 이 입력이 되는 것은 `크로스 사이트 스크립트 공겨` 가능성 있음.
+- 줄여서 `XSS` 위험이 존재함.
+- 위의 공격을 회피하기 위해서 추가 NPM 설치가 필요함.
+- https://www.npmjs.com/package/dompurify
+- `npm i dompurify`
+
+```jsx
+import { useState } from "react";
+import ReactQuill from "react-quill";
+import "react-quill/dist/quill.snow.css";
+
+// js 관련 글자들을 특수한 글자로 변경한다.
+import DOMPurify from "dompurify";
+
+const AddForm = () => {
   // js 자리
+  const [data, setData] = useState("");
+  // jsx 자리
+  return (
+    <div>
+      <form>
+        <input type="text" placeholder="제목을 입력하세요." />
+        <br />
+        <input type="password" placeholder="비밀번호를 입력하세요." />
+        <br />
+        <textarea></textarea>
+        <br />
+        <ReactQuill onChange={e => setData(e)} />
+        <button>확인</button>
+      </form>
+      <div>
+        <p>입력중인 내용: {data}</p>
+        {/* 아래처럼 출력해 봄 : 리액트에서 위험한 내용이고, html 형태다 설정함.*/}
+        <p dangerouslySetInnerHTML={{ __html: data }}></p>
+        {/* 최소한의 방지책 */}
+        <p dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(data) }}></p>
+      </div>
+    </div>
+  );
+};
 
-  // 화면이 보이면 한번 만 실행
-  useEffect(() => {
-    // 카카오 맵 스크립트 태그(엘리먼트)를 생성하라.
-    const kakaoMapscript = document.createElement("script");
-    // 스크립트를 동적, 즉 비동기로 불러들여라.
-    kakaoMapscript.async = true;
-    // 카카오 SDK URL 을 설정하라.
-    kakaoMapscript.src = `//dapi.kakao.com/v2/maps/sdk.js?appkey=${process.env.REACT_APP_KKO_MAP_JS_API_KEY}&autoload=false&libraries=services,clusterer`;
+export default AddForm;
+```
 
-    // html 문서의 head태그 에 추가하라.
-    document.head.appendChild(kakaoMapscript);
+### 3.2. 툴바 옵션 살펴보기
 
-    // 스크립트가 로드가 완료되면 실행될 이벤트 리스너를 추가한다.
-    kakaoMapscript.onload = () => {
-      // console.log(window.kakao);
-      window.kakao.maps.load(() => {
-        const container = document.getElementById("map");
-        const options = {
-          center: new window.kakao.maps.LatLng(37.5665, 126.978),
-          level: 3,
-        };
-        const map = new window.kakao.maps.Map(container, options);
-        const marker = new window.kakao.maps.Marker({
-          position: map.getCenter(),
-        });
-        marker.setMap(map);
-      });
-    };
-  }, []);
+- toolbar : "어떤 버튼을 보여줄지" 버튼 목록
+- format : "어떤 서식을 실제로 적용할지 여부" 허용 목록
+- modules : 각 기능을 카테고리로 묶어주는 기능
+
+```jsx
+import { useState } from "react";
+import ReactQuill from "react-quill";
+import "react-quill/dist/quill.snow.css";
+
+// js 관련 글자들을 특수한 글자로 변경한다.
+import DOMPurify from "dompurify";
+
+const AddForm = () => {
+  // js 자리
+  const [data, setData] = useState("");
+  // module 설정
+  const modules = {
+    toolbar: [["bold", "italic"]], // 버튼들
+  };
+
+  // format 설정
+  const formats = ["bold", "italic"];
 
   // jsx 자리
   return (
     <div>
-      <h1>지도출력</h1>
-      <div>
-        <div id="map" style={{ width: 500, height: 500 }}></div>
-      </div>
+      <form>
+        <ReactQuill
+          modules={modules}
+          formats={formats}
+          onChange={e => setData(e)}
+        />
+        <button>확인</button>
+      </form>
     </div>
   );
-}
+};
 
-export default App;
+export default AddForm;
 ```
 
-## 4. react-kakao-maps-sdk 활용하기
-
-- 레퍼런스 : https://react-kakao-maps-sdk.jaeseokim.dev
-- 참조블로그: https://velog.io/@wlwl99/React-Kakao-Map-SDK-사용하기
-- 설치 : `npm install react-kakao-maps-sdk`
-
-### 4.1. 지도를 출력하기 위한 설정
-
-- App.jsx 에 추가
+- 추천하는 기본형 modules, toolbar, format
 
 ```jsx
-import { useEffect, useState } from "react";
-import MapDiv from "./components/MapDiv";
+import { useState } from "react";
+import ReactQuill from "react-quill";
+import "react-quill/dist/quill.snow.css";
 
-function App() {
+// js 관련 글자들을 특수한 글자로 변경한다.
+import DOMPurify from "dompurify";
+
+const AddForm = () => {
   // js 자리
-  // 지도의 로딩 상태를 관리하는 state
-  const [isMaploaded, setIsMaploaded] = useState(false);
+  const [data, setData] = useState("");
+  // module 설정
+  const modules = {
+    toolbar: {
+      container: [
+        [{ header: [1, 2, 3, 4, 5, 6, false] }],
+        [{ font: [] }],
+        [{ align: [] }],
+        ["bold", "italic", "underline", "strike", "blockquote"],
+        [{ list: "ordered" }, { list: "bullet" }, "link"],
+        [
+          {
+            color: [
+              "#000000",
+              "#e60000",
+              "#ff9900",
+              "#ffff00",
+              "#008a00",
+              "#0066cc",
+              "#9933ff",
+              "#ffffff",
+              "#facccc",
+              "#ffebcc",
+              "#ffffcc",
+              "#cce8cc",
+              "#cce0f5",
+              "#ebd6ff",
+              "#bbbbbb",
+              "#f06666",
+              "#ffc266",
+              "#ffff66",
+              "#66b966",
+              "#66a3e0",
+              "#c285ff",
+              "#888888",
+              "#a10000",
+              "#b26b00",
+              "#b2b200",
+              "#006100",
+              "#0047b2",
+              "#6b24b2",
+              "#444444",
+              "#5c0000",
+              "#663d00",
+              "#666600",
+              "#003700",
+              "#002966",
+              "#3d1466",
+              "custom-color",
+            ],
+          },
+          { background: [] },
+        ],
+        ["image", "video"],
+        ["clean"],
+      ],
+    },
+  };
 
-  // 화면이 보이면 한번 만 실행
-  useEffect(() => {
-    // 카카오 맵 스크립트 태그(엘리먼트)를 생성하라.
-    const kakaoMapscript = document.createElement("script");
-    // 스크립트를 동적, 즉 비동기로 불러들여라.
-    kakaoMapscript.async = true;
-    // 카카오 SDK URL 을 설정하라.
-    kakaoMapscript.src = `//dapi.kakao.com/v2/maps/sdk.js?appkey=${process.env.REACT_APP_KKO_MAP_JS_API_KEY}&autoload=false&libraries=services,clusterer`;
+  // format 설정
+  // format 설정 (툴바에 맞춰서 허용 목록을 충분히 열어줌)
+  const formats = [
+    "header", // [{ header: [...] }]
+    "font", // [{ font: [] }]
+    "align", // [{ align: [] }]
 
-    // html 문서의 head태그 에 추가하라.
-    document.head.appendChild(kakaoMapscript);
+    "bold",
+    "italic",
+    "underline",
+    "strike",
+    "blockquote",
 
-    // 스크립트가 로드가 완료되면 실행될 이벤트 리스너를 추가한다.
-    kakaoMapscript.addEventListener("load", () => {
-      // 카카오맵을 로딩하고 로딩상태가 변하면 리랜더링한다.
-      window.kakao.maps.load(() => {
-        // 카카오 지도 로딩 완료로 리랜더링 진행
-        setIsMaploaded(true);
-      });
-    });
-  }, []);
+    "list",
+    "bullet", // [{ list: "ordered" }, { list: "bullet" }]
+    "link",
 
-  // 지도가 로드가 되지 않으면 로딩메시지를 출력한다.
-  if (!isMaploaded) {
-    return <div>지도를 불러오는 중입니다...</div>;
-  }
+    "color",
+    "background", // [{ color: [...] }, { background: [] }]
 
-  // jsx 자리
-  return (
-    <div>
-      <h1>지도출력</h1>
-      <MapDiv />
-    </div>
-  );
-}
-
-export default App;
-```
-
-### 4.2. 지도 출력하기
-
-- /src/components/Map.jsx
-
-```jsx
-import { Map, MapMarker } from "react-kakao-maps-sdk";
-
-const MapDiv = () => {
-  return (
-    <div>
-      <h2>NPM 을 이용한 지도 출력</h2>
-      <div>
-        <Map
-          center={{ lat: 33.5563, lng: 126.79581 }}
-          style={{ width: "100%", height: "360px" }}
-        >
-          <MapMarker position={{ lat: 33.55635, lng: 126.795841 }} />
-        </Map>
-      </div>
-    </div>
-  );
-};
-
-export default MapDiv;
-```
-
-## 5. 다양한 예제
-
-### 5.1. 기본 지도
-
-```jsx
-import { Map, MapMarker } from "react-kakao-maps-sdk";
-
-const MapDiv = () => {
-  return (
-    <div>
-      <h2>NPM 을 이용한 지도 출력</h2>
-      <div>
-        <Map
-          center={{ lat: 33.5563, lng: 126.79581 }} // 지도의 중심 좌표
-          style={{ width: "800px", height: "600px" }} // 지도 크기
-          level={3} // 지도 확대 레벨
-        ></Map>
-      </div>
-    </div>
-  );
-};
-
-export default MapDiv;
-```
-
-### 5.2. 마커 표시하기
-
-```jsx
-import { Map, MapMarker } from "react-kakao-maps-sdk";
-
-const MapDiv = () => {
-  return (
-    <div>
-      <h2>NPM 을 이용한 지도 출력</h2>
-      <div>
-        <Map
-          center={{ lat: 33.5563, lng: 126.79581 }}
-          style={{ width: "800px", height: "600px" }}
-          level={3}
-        >
-          {/* 마커 좌표 */}
-          <MapMarker position={{ lat: 33.55635, lng: 126.795841 }}></MapMarker>
-        </Map>
-      </div>
-    </div>
-  );
-};
-
-export default MapDiv;
-```
-
-### 5.3. 마커 여러개 표시하기
-
-```jsx
-import { Map, MapMarker } from "react-kakao-maps-sdk";
-
-const MapDiv = () => {
-  const locations = [
-    { title: "카카오", latlng: { lat: 33.450705, lng: 126.570677 } },
-    { title: "생태연못", latlng: { lat: 33.450936, lng: 126.569477 } },
-    { title: "텃밭", latlng: { lat: 33.450879, lng: 126.56994 } },
-    { title: "근린공원", latlng: { lat: 33.451393, lng: 126.570738 } },
+    "image",
+    "video", // ["image", "video"]
+    // "clean"은 서식 지우기 버튼이라 formats에 넣을 필요 없음
   ];
 
+  // jsx 자리
   return (
     <div>
-      <h2>NPM 을 이용한 지도 출력</h2>
-      <div>
-        <Map
-          center={{ lat: 33.450701, lng: 126.570667 }}
-          style={{ width: "800px", height: "600px" }}
-          level={3}
-        >
-          {locations.map((loc, idx) => (
-            <MapMarker
-              key={`${loc.title}-${loc.latlng}`}
-              position={loc.latlng}
-              image={{
-                src: "https://t1.daumcdn.net/localimg/localimages/07/mapapidoc/markerStar.png",
-                size: { width: 24, height: 35 },
-              }}
-              title={loc.title}
-            />
-          ))}
-        </Map>
-      </div>
+      <form>
+        <ReactQuill
+          modules={modules}
+          formats={formats}
+          onChange={e => setData(e)}
+        />
+        <button>확인</button>
+      </form>
     </div>
   );
 };
 
-export default MapDiv;
+export default AddForm;
 ```
 
-### 5.4. 맵 위에 커스텀 오버레이 표시하기
+### 3.3. 이미지 관련 처리
+
+- 입력중 보여지는 이미지는 실제로는 파일이 아님
+- 실제로는 파일을 별도로 보관하는 코드가 필요함.
+- 최종 실습은 Supabase 또는 Firebase, 백엔드 서버 가 있어야함.
 
 ```jsx
-import { CustomOverlayMap, Map, MapMarker } from "react-kakao-maps-sdk";
+import { useMemo, useRef, useState } from "react";
+import ReactQuill from "react-quill";
+import "react-quill/dist/quill.snow.css";
 
-const MapDiv = () => {
-  return (
-    <div>
-      <h2>NPM 을 이용한 지도 출력</h2>
-      <div>
-        <Map
-          center={{ lat: 33.5563, lng: 126.79581 }}
-          style={{ width: "800px", height: "600px" }}
-          level={3}
-        >
-          <CustomOverlayMap position={{ lat: 33.55635, lng: 126.795841 }}>
-            <div className="overlay" style={{ background: "red", padding: 50 }}>
-              Here!
-            </div>
-          </CustomOverlayMap>
-        </Map>
-      </div>
-    </div>
-  );
-};
+// js 관련 글자들을 특수한 글자로 변경한다.
+import DOMPurify from "dompurify";
 
-export default MapDiv;
-```
+const AddForm = () => {
+  // js 자리
+  const [data, setData] = useState("");
 
-### 5.5. 지도 확대/축소 버튼 출력
+  // 이미지 처리 1. HTML 태그 중에 Quill 을 참조하도록 보관함.
+  const quillRef = useRef(null);
 
-```jsx
-import { useState } from "react";
-import { CustomOverlayMap, Map, MapMarker } from "react-kakao-maps-sdk";
+  // 이미지 처리 3. 사용자가 이미지 선택시 개발자가 직접 처리
 
-const MapDiv = () => {
-  const [level, setLevel] = useState(3);
-  return (
-    <div>
-      <h2>NPM 을 이용한 지도 출력</h2>
-      <div>
-        <Map
-          center={{ lat: 33.5563, lng: 126.79581 }}
-          style={{ width: "800px", height: "600px" }}
-          level={level}
-        >
-          <CustomOverlayMap position={{ lat: 33.55635, lng: 126.795841 }}>
-            <div className="overlay" style={{ background: "red", padding: 5 }}>
-              Here!
-            </div>
-          </CustomOverlayMap>
-          <button onClick={() => setLevel(level + 1)}>지도 축소 버튼</button>
-          <button onClick={() => setLevel(level - 1)}>지도 확대 버튼</button>
-        </Map>
-      </div>
-    </div>
-  );
-};
+  // 이미지 처리(프론트에서 처리)
+  const imageHandler = () => {
+    //console.log("이미지 처리하기");
+    // 1. 현재 찾아서 에디터를 참조한다.
+    // useRef 로 보관한 내용물 참조(current)
+    const editor = quillRef.current.getEditor();
+    // 2. js 로 <input type="file" /> 을 생성한다.
+    const input = document.createElement("input");
+    // 3. js 로 속성을 셋팅한다.
+    input.setAttribute("type", "file");
+    input.setAttribute("accept", "image/*");
+    // 4. js 로 마치 <input type="file" /> 을 클릭한 것처럼 실행한다.
+    input.click(); // 각에 클릭
+    // 5. js 로 "change" 이벤트를 생성해 준다.
+    input.addEventListener("change", function () {
+      //  안전한 코딩
+      try {
+        // 선택된 파일
+        const file = input.files[0];
+        // 임시 웹브라우저의 cache 이미지 URL 생성
 
-export default MapDiv;
-```
+        // 백엔드로 post 샘플 코드
+        // const formData = new FormData();
+        // formData.append("이름", file);
+        // const res = axios.post("주소", formData, {
+        //   headers: {
+        //     "Content-Type": "multipart/form-data",
+        //   },
+        // });
+        // let tempUrl = res.data;
 
-### 5.6. Geolocation API
+        // 정석적으로 백엔드에 axios.post 로 이미지 전송후
+        // 리턴 결과로 이미지의 URL 을 받아옵니다.
+        // 받는 결과를 출력합니다.(샘플)
+        let tempUrl = URL.createObjectURL(file);
+        tempUrl =
+          "https://i.namu.wiki/i/hHgClALonR25RtWcJfgpL9UM8BbDxN7A0oAHn4jljS_9529UDxCD551fz2kF631PfsS-sTd-rDZVIAGAnCNXmyz6thjeAqqkaQSUsU1ZCEnVifTUhK1uVNM0Suj72V6cg4bOMfrEQ9W2AfOFzeFoJQ.webp";
 
-- 사용자의 위치 정보를 웹 애플리케이션에 제공할 수 있는 API
-- 개인정보 보호를 위해서 브라우저는 사용자에게 위치 정보에 대한 권한을 받은 후 위치 정보를 사용할 수 있다.
-- Geolocation.getCurrentPosition() : 기기의 현재 위치를 가져오는 메소드
-- Geolocation.watchPosition() : 기기의 위치가 바뀔 때마다, 새로운 위치를 사용하여 함수를 호출한다.
-
-### 5.7. 현재 위치 마커 표시하기
-
-- 조금 더 체크 해보자. 위치가 엉성하다.
-
-```jsx
-import { useEffect, useRef, useState } from "react";
-import { Map, MapMarker } from "react-kakao-maps-sdk";
-
-const MapDiv = () => {
-  // 현재 위치의 좌표값을 저장할 상태 :  {위도: 값, 경도: 값}
-  const [coordinates, setCoordinates] = useState(null);
-  // map 태그를 보관함
-  const mapRef = useRef();
-
-  // 지도정보를 잘 불러온 경우 실행할 함수
-  const successHandler = response => {
-    // 각종 정보가 들어옴
-    console.log(response); // coords: GeolocationCoordinates {latitude: 위도, longitude: 경도, …} timestamp: 1673446873903
-    // 위도와 경도를 추출
-    const { latitude, longitude } = response.coords;
-    setCoordinates({
-      lat: latitude,
-      lng: longitude,
-    });
-  };
-
-  // 위치 정보를 못받은 경우 함수
-  const errorHandler = error => {
-    console.log(error);
-  };
-
-  useEffect(() => {
-    // 성공시 successHandler, 실패시 errorHandler 함수가 실행된다.
-    navigator.geolocation.getCurrentPosition(successHandler, errorHandler, {
-      enableHighAccuracy: true, // 가능한 가장 정확한 위치 정보 사용
-      timeout: 5000, // 최대 대기 시간(ms)
-      maximumAge: 0, // 캐시된 위치 사용 안 함
-    });
-  }, []);
-
-  return (
-    <div>
-      <h2>NPM 을 이용한 지도 출력</h2>
-      <div>
-        {coordinates && (
-          <>
-            <Map
-              center={{
-                lat: coordinates.lat,
-                lng: coordinates.lng,
-              }}
-              style={{ width: "800px", height: "600px" }}
-              level={3}
-              ref={mapRef}
-            >
-              <MapMarker
-                position={{
-                  lat: coordinates.lat,
-                  lng: coordinates.lng,
-                }}
-              />
-            </Map>
-          </>
-        )}
-      </div>
-
-      <div>
-        현재 위치의 좌표는..
-        <p>위도 : {coordinates?.lat}</p>
-        <p>경도 : {coordinates?.lng}</p>
-      </div>
-    </div>
-  );
-};
-
-export default MapDiv;
-```
-
-### 5.8. 좌표값으로 주소 얻기
-
-```jsx
-import { useState } from "react";
-import { Map, MapMarker } from "react-kakao-maps-sdk";
-
-const MapDiv = () => {
-  // 아래의 구문으로 window.kakao 를 접근할 수 있습니다.
-  const { kakao } = window;
-
-  const [address, setAddress] = useState(null); // 현재 좌표의 주소를 저장할 상태
-
-  const getAddress = ({ lat, lng }) => {
-    const geocoder = new kakao.maps.services.Geocoder(); // 좌표 -> 주소로 변환해주는 객체
-    console.log(geocoder);
-
-    const coord = new kakao.maps.LatLng(lat, lng); // 주소로 변환할 좌표 입력
-    const callback = function (result, status) {
-      if (status === kakao.maps.services.Status.OK) {
-        setAddress(result[0].address);
+        // 에디터에 배치하기
+        const range = editor.getSelection();
+        // tempUrl 은 정확히 나온다.
+        // 그런데 출력에는 <img src="//:0"> 가 나온다.
+        editor.insertEmbed(range.index, "image", tempUrl);
+        // 강제로 마우스 커서 위치 이동하기
+        editor.setSelection(range.index + 1);
+      } catch (error) {
+        console.log(error);
       }
-    };
-    geocoder.coord2Address(coord.getLng(), coord.getLat(), callback);
-  };
-
-  return (
-    <div>
-      <h2>NPM 을 이용한 지도 출력</h2>
-      <div>
-        <Map
-          center={{ lat: 37.5566803113882, lng: 126.904501286522 }}
-          style={{ width: "800px", height: "600px" }}
-          level={3}
-        >
-          <MapMarker
-            position={{ lat: 37.5566803113882, lng: 126.904501286522 }}
-          />
-          <button
-            onClick={() =>
-              getAddress({ lat: 37.5566803113882, lng: 126.904501286522 })
-            }
-          >
-            현재 좌표의 주소 얻기
-          </button>
-        </Map>
-
-        {address && (
-          <div>
-            현재 좌표의 주소는..
-            <p>address_name: {address.address_name}</p>
-            <p>region_1depth_name: {address.region_1depth_name}</p>
-            <p>region_2depth_name: {address.region_2depth_name}</p>
-            <p>region_3depth_name: {address.region_3depth_name}</p>
-          </div>
-        )}
-      </div>
-    </div>
-  );
-};
-
-export default MapDiv;
-```
-
-### 5.9. 지도 모양 바꾸기
-
-```jsx
-import { useState } from "react";
-import { Map, MapTypeId } from "react-kakao-maps-sdk";
-
-const MapDiv = () => {
-  const [mapTypeId, setMapTypeId] = useState("");
-  return (
-    <div>
-      <h2>NPM 을 이용한 지도 출력</h2>
-      <div>
-        <Map
-          id="map"
-          center={{ lat: 33.5563, lng: 126.79581 }}
-          style={{ width: "100%", height: "360px" }}
-          level={5}
-        >
-          {mapTypeId && <MapTypeId type={mapTypeId} />}
-        </Map>
-        <p>
-          <button onClick={() => setMapTypeId("TRAFFIC")}>교통정보 보기</button>{" "}
-          <button onClick={() => setMapTypeId("ROADVIEW")}>
-            로드뷰 도로정보 보기
-          </button>{" "}
-          <button onClick={() => setMapTypeId("TERRAIN")}>지형정보 보기</button>{" "}
-          <button onClick={() => setMapTypeId("USE_DISTRICT")}>
-            지적편집도 보기
-          </button>
-        </p>
-      </div>
-    </div>
-  );
-};
-
-export default MapDiv;
-```
-
-### 5.10. 선의 거리 계산하기
-
-```jsx
-import { useEffect, useState } from "react";
-import { CustomOverlayMap, Map, Polyline } from "react-kakao-maps-sdk";
-
-const CalculatePolylineDistanceStyle = () => (
-  <div>
-    <style>{`
-    .dot {overflow:hidden;float:left;width:12px;height:12px;background: url('https://t1.daumcdn.net/localimg/localimages/07/mapapidoc/mini_circle.png');}
-    .dotOverlay {color:#000;position:relative;bottom:10px;border-radius:6px;border: 1px solid #ccc;border-bottom:2px solid #ddd;float:left;font-size:12px;padding:5px;background:#fff;}
-    .dotOverlay li {display:block;}
-    .dotOverlay:nth-of-type(n) {border:0; box-shadow:0px 1px 2px #888;}
-    .number {font-weight:bold;color:#ee6152;}
-    .dotOverlay:after {content:'position:absolute;margin-left:-6px;left:50%;bottom:-8px;width:11px;height:8px;background:url('https://t1.daumcdn.net/localimg/localimages/07/mapapidoc/vertex_white_small.png')}
-    .distanceInfo {position:relative;list-style:none;margin:0;}
-    .distanceInfo .label {display:inline-block;width:50px;}
-    .distanceInfo:after {content:none;}
-    `}</style>
-  </div>
-);
-
-function App() {
-  const [isdrawing, setIsdrawing] = useState(false);
-  const [clickLine, setClickLine] = useState();
-  const [paths, setPaths] = useState([]);
-  const [distances, setDistances] = useState([]);
-  const [mousePosition, setMousePosition] = useState({
-    lat: 0,
-    lng: 0,
-  });
-  const [moveLine, setMoveLine] = useState();
-
-  // 클릭시 실행
-  const handleClick = (_map, mouseEvent) => {
-    if (!isdrawing) {
-      setDistances([]);
-      setPaths([]);
-    }
-    setPaths(prev => [
-      ...prev,
-      {
-        lat: mouseEvent.latLng.getLat(),
-        lng: mouseEvent.latLng.getLng(),
-      },
-    ]);
-    setDistances(prev => [
-      ...prev,
-      Math.round(clickLine.getLength() + moveLine.getLength()),
-    ]);
-    setIsdrawing(true);
-  };
-  // 마우스 Move
-  const handleMouseMove = (_map, mouseEvent) => {
-    setMousePosition({
-      lat: mouseEvent.latLng.getLat(),
-      lng: mouseEvent.latLng.getLng(),
     });
+    // 6. 이벤트로 가상의 image url 을 생성한다. URL.crateObjectURL
+    // 7. 참조해둔 에디터에 img 태그를 밀어넣고 주소는 위의 주소로 넣는다.
+    // 8. 마우스 커서 위치를 조절한다.
   };
-  // 마우스 오른쪽으로 종료
-  const handleRightClick = (_map, _mouseEvent) => {
-    setIsdrawing(false);
-  };
+  // module 설정
+  // 모듈 활용
+  // useMemo : `변수를 만들고 다시 생성되지 않도록 메모`한다.
+  // useMemo : 리랜더링시 다시 변수를 만들지 않는다.
+  const modules = useMemo(
+    () => ({
+      toolbar: {
+        container: [
+          [{ header: [1, 2, 3, 4, 5, 6, false] }],
+          [{ font: [] }],
+          [{ align: [] }],
+          ["bold", "italic", "underline", "strike", "blockquote"],
+          [{ list: "ordered" }, { list: "bullet" }, "link"],
+          [
+            {
+              color: [
+                "#000000",
+                "#e60000",
+                "#ff9900",
+                "#ffff00",
+                "#008a00",
+                "#0066cc",
+                "#9933ff",
+                "#ffffff",
+                "#facccc",
+                "#ffebcc",
+                "#ffffcc",
+                "#cce8cc",
+                "#cce0f5",
+                "#ebd6ff",
+                "#bbbbbb",
+                "#f06666",
+                "#ffc266",
+                "#ffff66",
+                "#66b966",
+                "#66a3e0",
+                "#c285ff",
+                "#888888",
+                "#a10000",
+                "#b26b00",
+                "#b2b200",
+                "#006100",
+                "#0047b2",
+                "#6b24b2",
+                "#444444",
+                "#5c0000",
+                "#663d00",
+                "#666600",
+                "#003700",
+                "#002966",
+                "#3d1466",
+                "custom-color",
+              ],
+            },
+            { background: [] },
+          ],
+          ["image", "video"],
+          ["clean"],
+        ],
+        // 이미지 관련해서는 내가 직접 처리할께.
+        handlers: {
+          image: imageHandler,
+        },
+      },
+    }),
+    [],
+  );
 
-  //거리계산
-  const DistanceInfo = ({ distance }) => {
-    // 도보의 시속은 평균 4km/h 이고 도보의 분속은 67m/min입니다
-    const walkkTime = (distance / 67) | 0;
-    // 자전거의 평균 시속은 16km/h 이고 이것을 기준으로 자전거의 분속은 267m/min입니다
-    const bycicleTime = (distance / 227) | 0;
+  // format 설정
+  // format 설정 (툴바에 맞춰서 허용 목록을 충분히 열어줌)
+  const formats = [
+    "header", // [{ header: [...] }]
+    "font", // [{ font: [] }]
+    "align", // [{ align: [] }]
 
-    return (
-      <ul className="dotOverlay distanceInfo">
-        <li>
-          <span className="label">총거리</span>{" "}
-          <span className="number">{distance}</span>m
-        </li>
-        <li>
-          <span className="label">도보</span>{" "}
-          {walkkTime > 60 && (
-            <>
-              <span className="number">{Math.floor(walkkTime / 60)}</span>{" "}
-              시간{" "}
-            </>
-          )}
-          <span className="number">{walkkTime % 60}</span> 분
-        </li>
-        <li>
-          <span className="label">자전거</span>{" "}
-          {bycicleTime > 60 && (
-            <>
-              <span className="number">{Math.floor(bycicleTime / 60)}</span>{" "}
-              시간{" "}
-            </>
-          )}
-          <span className="number">{bycicleTime % 60}</span> 분
-        </li>
-      </ul>
-    );
-  };
+    "bold",
+    "italic",
+    "underline",
+    "strike",
+    "blockquote",
 
-  useEffect(() => {}, []);
+    "list",
+    "bullet", // [{ list: "ordered" }, { list: "bullet" }]
+    "link",
 
+    "color",
+    "background", // [{ color: [...] }, { background: [] }]
+
+    "image",
+    "video", // ["image", "video"]
+    // "clean"은 서식 지우기 버튼이라 formats에 넣을 필요 없음
+  ];
+
+  // jsx 자리
   return (
     <div>
-      <h1>카카오 지도</h1>
+      <form style={{ width: "80%", height: 500 }}>
+        <ReactQuill
+          ref={quillRef} // 이미지 처리 2. 참조연결
+          modules={modules}
+          formats={formats}
+          onChange={e => setData(e)}
+        />
+        <button>확인</button>
+      </form>
       <div>
-        <CalculatePolylineDistanceStyle />
-        <Map // 지도를 표시할 Container
-          id={`map`}
-          center={{
-            // 지도의 중심좌표
-            lat: 37.498004414546934,
-            lng: 127.02770621963765,
-          }}
-          style={{
-            // 지도의 크기
-            width: "100%",
-            height: "450px",
-          }}
-          level={3} // 지도의 확대 레벨
-          onClick={handleClick}
-          onRightClick={handleRightClick}
-          onMouseMove={handleMouseMove}
-        >
-          <Polyline
-            path={paths}
-            strokeWeight={3} // 선의 두께입니다
-            strokeColor={"#db4040"} // 선의 색깔입니다
-            strokeOpacity={1} // 선의 불투명도입니다 0에서 1 사이값이며 0에 가까울수록 투명합니다
-            strokeStyle={"solid"} // 선의 스타일입니다
-            onCreate={setClickLine}
-          />
-          {paths.map(path => (
-            <CustomOverlayMap
-              key={`dot-${path.lat},${path.lng}`}
-              position={path}
-              zIndex={1}
-            >
-              <span className="dot"></span>
-            </CustomOverlayMap>
-          ))}
-          {paths.length > 1 &&
-            distances.slice(1, distances.length).map((distance, index) => (
-              <CustomOverlayMap
-                key={`distance-${paths[index + 1].lat},${paths[index + 1].lng}`}
-                position={paths[index + 1]}
-                yAnchor={1}
-                zIndex={2}
-              >
-                {!isdrawing && distances.length === index + 2 ? (
-                  <DistanceInfo distance={distance} />
-                ) : (
-                  <div className="dotOverlay">
-                    거리 <span className="number">{distance}</span>m
-                  </div>
-                )}
-              </CustomOverlayMap>
-            ))}
-          <Polyline
-            path={isdrawing ? [paths[paths.length - 1], mousePosition] : []}
-            strokeWeight={3} // 선의 두께입니다
-            strokeColor={"#db4040"} // 선의 색깔입니다
-            strokeOpacity={0.5} // 선의 불투명도입니다 0에서 1 사이값이며 0에 가까울수록 투명합니다
-            strokeStyle={"solid"} // 선의 스타일입니다
-            onCreate={setMoveLine}
-          />
-          {isdrawing && (
-            <CustomOverlayMap position={mousePosition} yAnchor={1} zIndex={2}>
-              <div className="dotOverlay distanceInfo">
-                총거리{" "}
-                <span className="number">
-                  {Math.round(clickLine.getLength() + moveLine.getLength())}
-                </span>
-                m
-              </div>
-            </CustomOverlayMap>
-          )}
-        </Map>
+        <p>{data}</p>
+      </div>
+      <div>
+        입력중인 내용 :
+        <p dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(data) }}></p>
       </div>
     </div>
   );
-}
-export default App;
+};
+
+export default AddForm;
 ```
+
+## 4. Supabase 연동하기
