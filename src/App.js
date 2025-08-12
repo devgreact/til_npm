@@ -1,10 +1,10 @@
-import AniPage from "./pages/AniPage";
+import Framer from "./pages/Framer";
 
 function App() {
   return (
     <div>
-      <h1>Anime</h1>
-      <AniPage />
+      <h1>Framer Motion</h1>
+      <Framer />
     </div>
   );
 }
